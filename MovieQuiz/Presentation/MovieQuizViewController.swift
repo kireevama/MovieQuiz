@@ -20,14 +20,12 @@ final class MovieQuizViewController: UIViewController {
     }
     
     // MARK: - Private structs
-    // для состояния "Вопрос показан"
     private struct QuizStepViewModel {
         let image: UIImage
         let question: String
         let questionNumber: String
     }
     
-    // для состояния "Результат квиза"
     private struct QuizResultViewModel {
         let title: String
         let text: String
@@ -120,7 +118,6 @@ final class MovieQuizViewController: UIViewController {
         }
     }
     
-    // Алерт с результатами квиза
     private func quizeResultsAlert() {
         let alert = UIAlertController(title: "Этот райнд окончен!", message: "Ваш результат \(correctAnswers)/\(questions.count)", preferredStyle: .alert)
         
