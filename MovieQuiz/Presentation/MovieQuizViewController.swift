@@ -13,7 +13,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     private let questionAmount = 10
-
+    
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
@@ -24,6 +24,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         
         let questionFactory = QuestionFactory(delegate: self)
+        self.questionFactory = questionFactory
         questionFactory.requestNextQuestion()
         
         alertPresenter = AlertPresenter(delegate: self)
@@ -31,92 +32,85 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         statisticService = StatisticService()
     }
     
-        // MARK: - QuestionFactoryDelegate
+    // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
         }
-
+        
         currentQuestion = question
         let viewModel = convert(model: question)
         DispatchQueue.main.async {
-                self.show(quiz: viewModel)
-            }
+            self.show(quiz: viewModel)
+        }
     }
-        
-        // MARK: - Private methods
+    
+    // MARK: - Private methods
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-            let result = QuizStepViewModel(
-                image: UIImage(named: model.name) ?? UIImage(),
-                question: model.text,
-                questionNumber: ("\(currentQuestionIndex + 1)/\(questionAmount)")
-            )
-            return result
-        }
-        
+        let result = QuizStepViewModel(
+            image: UIImage(named: model.name) ?? UIImage(),
+            question: model.text,
+            questionNumber: ("\(currentQuestionIndex + 1)/\(questionAmount)")
+        )
+        return result
+    }
+    
     private func show(quiz step: QuizStepViewModel) {
-           imageView.image = step.image
-           textLabel.text = step.question
-           counterLabel.text = step.questionNumber
-
+        imageView.image = step.image
+        textLabel.text = step.question
+        counterLabel.text = step.questionNumber
         
-           questionFactory?.requestNextQuestion()
+        imageView.layer.borderWidth = 0.0
+        imageView.layer.cornerRadius = 20
         
-           imageView.layer.borderWidth = 0.0
-           imageView.layer.cornerRadius = 20
-             
-        }
-        
+    }
+    
     private func showAnswerResult(isCorrect: Bool) {
-            imageView.layer.masksToBounds = true
-            imageView.layer.borderWidth = 8.0
-            
-            if isCorrect {
-                imageView.layer.borderColor = UIColor.ypGreen.cgColor
-                correctAnswers += 1
-            } else {
-                imageView.layer.borderColor = UIColor.ypRed.cgColor
-            }
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 8.0
+        
+        if isCorrect {
+            imageView.layer.borderColor = UIColor.ypGreen.cgColor
+            correctAnswers += 1
+        } else {
+            imageView.layer.borderColor = UIColor.ypRed.cgColor
+        }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.showNextQuestionOrResult()
-            }
-            
-            noButton.isEnabled = false
-            yesButton.isEnabled = false
-
+            self.showNextQuestionOrResult()
         }
         
-        private func showNextQuestionOrResult () {
-            if currentQuestionIndex == questionAmount - 1 {
-                showResultsAlert()
-            } else {
-                currentQuestionIndex += 1
-                
-                // Дорогой ревьюер, не уверена что у меня верно реализован делегат для questionFactory, потому что без дополнительного let questionFactory = QuestionFactory(delegate: self) ничего не работает здесь и в замыкании showResultsAlert. Если это топорный метод и так делать не нужно, дайте наводку как поправить и где я делаю что-то не так
-                let questionFactory = QuestionFactory(delegate: self)
-                questionFactory.requestNextQuestion()
-            }
-                
-                noButton.isEnabled = true
-                yesButton.isEnabled = true
+        noButton.isEnabled = false
+        yesButton.isEnabled = false
+        
+    }
+    
+    private func showNextQuestionOrResult () {
+        if currentQuestionIndex == questionAmount - 1 {
+            showResultsAlert()
+        } else {
+            currentQuestionIndex += 1
+            questionFactory?.requestNextQuestion()
         }
         
-        func showResultsAlert () {
-            statisticService?.store(correct: correctAnswers, total: questionAmount)
-            
-            let questionFactory = QuestionFactory(delegate: self)
-            let alertModel = AlertModel(title: "Этот раунд окончен!",
+        noButton.isEnabled = true
+        yesButton.isEnabled = true
+    }
+    
+    func showResultsAlert () {
+        statisticService?.store(correct: correctAnswers, total: questionAmount)
+        
+        let alertModel = AlertModel(title: "Этот раунд окончен!",
                                     message: makeResultMassage(),
                                     buttonText: "Сыграть еще раз",
                                     completion: { [weak self] in
-                                                self?.currentQuestionIndex = 0
-                                                self?.correctAnswers = 0
-                                                questionFactory.requestNextQuestion()
-                
+            self?.currentQuestionIndex = 0
+            self?.correctAnswers = 0
+            self?.questionFactory?.requestNextQuestion()
+            
         })
         
-            alertPresenter?.show(resultsAlert: alertModel)
+        alertPresenter?.show(resultsAlert: alertModel)
     }
     
     private func makeResultMassage () -> String {
@@ -141,23 +135,23 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         return massage
     }
-        
-        // MARK: - IBAction
-        @IBAction private func noButtonClicked(_ sender: Any) {
-            guard let currentQuestion = currentQuestion else {
-                return
-            }
-            let givenAnswer = false
-            showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    
+    // MARK: - IBAction
+    @IBAction private func noButtonClicked(_ sender: Any) {
+        guard let currentQuestion = currentQuestion else {
+            return
         }
-        
-        @IBAction private func yesButtonClicked(_ sender: Any) {
-            guard let currentQuestion = currentQuestion else {
-                return
-            }
-            let givenAnswer = true
-            showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-        }
-        
+        let givenAnswer = false
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
+    
+    @IBAction private func yesButtonClicked(_ sender: Any) {
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        let givenAnswer = true
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
+    
+}
 

@@ -78,17 +78,18 @@ extension StatisticService: StatisticServiceProtocol {
     func store(correct count: Int, total amount: Int) {
         gamesCount += 1
         let correct = count
-        self.totalCorrect += correct
+        total = amount
         
+        self.totalCorrect += correct
         totalAccuracy = (Double(totalCorrect) / Double(total * gamesCount)) * 100
         
         let newBestGame = GameResult(correct: correct, total: amount, date: Date())
-
-            if newBestGame.isBetterThan(bestGame) {
-//                bestGame = GameResult(correct: correct, total: amount, date: Date())
-                bestGame = newBestGame
-            }
-           
+        
+        if newBestGame.isBetterThan(bestGame) {
+            bestGame = newBestGame
+        }
+        
+        let allValues = UserDefaults.standard.dictionaryRepresentation()
     }
     
 }

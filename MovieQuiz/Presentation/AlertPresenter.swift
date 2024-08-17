@@ -27,9 +27,9 @@ class AlertPresenter: AlertPresenterProtocol {
             resultsAlert.completion()
         }
         
-            alert.addAction(action)
-            delegate?.present(alert, animated: true)
+        alert.addAction(action)
+        delegate?.present(alert, animated: true)
         
-        }
-
+    }
+    
 }

@@ -8,9 +8,9 @@
 import Foundation
 
 struct GameResult {
-    var correct: Int // количество правильных ответов
-    var total: Int // количество вопросов квиза
-    var date: Date // дата
+    var correct: Int
+    var total: Int
+    var date: Date
     
     func isBetterThan (_ another: GameResult) -> Bool {
         correct > another.correct
