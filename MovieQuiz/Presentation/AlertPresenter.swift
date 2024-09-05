@@ -15,7 +15,7 @@ class AlertPresenter: AlertPresenterProtocol {
     init(delegate: UIViewController? = nil) {
         self.delegate = delegate
     }
-    
+
     func show(resultsAlert: AlertModel) {
         let alert = UIAlertController(
             title: resultsAlert.title,
@@ -29,7 +29,6 @@ class AlertPresenter: AlertPresenterProtocol {
         
         alert.addAction(action)
         delegate?.present(alert, animated: true)
-        
     }
-    
 }
+
