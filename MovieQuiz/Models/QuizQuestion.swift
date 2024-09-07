@@ -8,7 +8,7 @@
 import Foundation
 
 struct QuizQuestion {
-    let name: String
+    let image: Data
     let text: String
     let correctAnswer: Bool
 }

@@ -89,7 +89,6 @@ extension StatisticService: StatisticServiceProtocol {
             bestGame = newBestGame
         }
         
-        let allValues = UserDefaults.standard.dictionaryRepresentation()
     }
     
 }

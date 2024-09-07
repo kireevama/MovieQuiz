@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import UIKit
 
 protocol AlertPresenterProtocol {
     func show(resultsAlert: AlertModel)
 }
+
