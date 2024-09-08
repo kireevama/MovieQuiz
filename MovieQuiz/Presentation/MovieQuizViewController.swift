@@ -3,13 +3,13 @@ import UIKit
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     // MARK: - IBOutlet
-    @IBOutlet weak private var imageView: UIImageView!
-    @IBOutlet weak private var textLabel: UILabel!
-    @IBOutlet weak private var counterLabel: UILabel!
-    @IBOutlet weak private var noButton: UIButton!
-    @IBOutlet weak private var yesButton: UIButton!
+    @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private weak var textLabel: UILabel!
+    @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet private weak var noButton: UIButton!
+    @IBOutlet private weak var yesButton: UIButton!
     
-    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Private properties
     private var currentQuestionIndex = 0
@@ -112,7 +112,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             showResultsAlert()
         } else {
             currentQuestionIndex += 1
-
+            
             questionFactory?.requestNextQuestion()
         }
         
@@ -120,7 +120,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.isEnabled = true
     }
     
-    func showResultsAlert () {
+    private func showResultsAlert () {
         statisticService?.store(correct: correctAnswers, total: questionAmount)
         
         let alertModel = AlertModel(title: "Этот раунд окончен!",
@@ -136,10 +136,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter?.show(resultsAlert: alertModel)
     }
     
-    func showNetworkError (message: String) {
+    private func showNetworkError (message: String) {
         hideLoadingIndicator()
         
-        let alertModel = AlertModel(title: "Ошибка", message: message, buttonText: "Попробовать ещё раз") { [weak self] in
+        let alertModel = AlertModel(title: "Ошибка",
+                                    message: message,
+                                    buttonText: "Попробовать ещё раз") { [weak self] in
             guard let self = self else { return }
             
             self.currentQuestionIndex = 0
@@ -149,6 +151,21 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         alertPresenter?.show(resultsAlert: alertModel)
     }
+    
+    // new
+    //    private func showImageLoadError (message: String) {
+    //        hideLoadingIndicator()
+    //
+    //        let alert = AlertModel(title: "Что-то пошло не так(",
+    //                               message: message,
+    //                               buttonText: "Попробовать ещё раз") { [weak self] in
+    //            guard let self = self else { return }
+    //
+    //
+    //        }
+    //    }
+    
+    // new
     
     private func makeResultMassage () -> String {
         guard let statisticService = statisticService else {
