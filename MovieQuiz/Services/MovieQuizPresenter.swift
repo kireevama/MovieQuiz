@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
     let questionAmount: Int = 10
     private var currentQuestionIndex: Int = 0
     var correctAnswers = 0
@@ -15,15 +15,37 @@ final class MovieQuizPresenter {
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
     private var alertPresenter: AlertPresenterProtocol?
-    var questionFactory: QuestionFactoryProtocol?
+    private var questionFactory: QuestionFactoryProtocol?
     private var statisticService: StatisticServiceProtocol?
+    
+    init(viewController: MovieQuizViewController) {
+            self.viewController = viewController
+            
+            questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+            questionFactory?.loadData()
+            viewController.showLoadingIndicator()
+        }
+    
+    // MARK: - QuestionFactoryDelegate
+    
+    func didLoadDataFromServer() {
+            viewController?.hideLoadingIndicator()
+            questionFactory?.requestNextQuestion()
+        }
+    
+    func didFailToLoadData(with error: Error) {
+            let message = error.localizedDescription
+            viewController?.showNetworkError(message: message)
+        }
     
     func isLastQuestion() -> Bool {
             currentQuestionIndex == questionAmount - 1
         }
         
-        func resetQuestionIndex() {
+        func restartGame() {
             currentQuestionIndex = 0
+            correctAnswers = 0
+            questionFactory?.requestNextQuestion()
         }
         
         func switchToNextQuestion() {
@@ -68,7 +90,7 @@ final class MovieQuizPresenter {
             self.viewController?.show(quiz: viewModel)
         }
     }
-    //new
+    
     func showNextQuestionOrResult () {
         if self.isLastQuestion() {
             viewController?.showResultsAlert()
@@ -81,5 +103,8 @@ final class MovieQuizPresenter {
         viewController?.yesButton.isEnabled = true
     }
     
+    func didAnswer(isCorrectAnswer: Bool) {
+        if isCorrectAnswer { correctAnswers += 1 }
+    }
 
 }
