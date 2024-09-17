@@ -10,9 +10,13 @@ import UIKit
 final class MovieQuizPresenter {
     let questionAmount: Int = 10
     private var currentQuestionIndex: Int = 0
+    var correctAnswers = 0
     
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
+    private var alertPresenter: AlertPresenterProtocol?
+    var questionFactory: QuestionFactoryProtocol?
+    private var statisticService: StatisticServiceProtocol?
     
     func isLastQuestion() -> Bool {
             currentQuestionIndex == questionAmount - 1
@@ -64,4 +68,18 @@ final class MovieQuizPresenter {
             self.viewController?.show(quiz: viewModel)
         }
     }
+    //new
+    func showNextQuestionOrResult () {
+        if self.isLastQuestion() {
+            viewController?.showResultsAlert()
+        } else {
+            self.switchToNextQuestion()
+            questionFactory?.requestNextQuestion()
+        }
+        
+        viewController?.noButton.isEnabled = true
+        viewController?.yesButton.isEnabled = true
+    }
+    
+
 }

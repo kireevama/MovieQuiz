@@ -6,13 +6,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var counterLabel: UILabel!
-    @IBOutlet private weak var noButton: UIButton!
-    @IBOutlet private weak var yesButton: UIButton!
+    @IBOutlet weak var noButton: UIButton!
+    @IBOutlet weak var yesButton: UIButton!
     
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Private properties
-    private var correctAnswers = 0
+    private var correctAnswers = 0 //перенесли
     
     private var questionFactory: QuestionFactoryProtocol?
     private var alertPresenter: AlertPresenterProtocol?
@@ -68,7 +68,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         imageView.layer.borderWidth = 0.0
         imageView.layer.cornerRadius = 20
-        
     }
     
     func showAnswerResult(isCorrect: Bool) {
@@ -83,28 +82,29 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.showNextQuestionOrResult()
+            self.presenter.correctAnswers = self.correctAnswers
+            self.presenter.questionFactory = self.questionFactory
+            self.presenter.showNextQuestionOrResult()
         }
         
         noButton.isEnabled = false
         yesButton.isEnabled = false
-        
     }
     
-    private func showNextQuestionOrResult () {
-        if presenter.isLastQuestion() {
-            showResultsAlert()
-        } else {
-            presenter.switchToNextQuestion()
-            
-            questionFactory?.requestNextQuestion()
-        }
-        
-        noButton.isEnabled = true
-        yesButton.isEnabled = true
-    }
-    
-    private func showResultsAlert () {
+//    private func showNextQuestionOrResult () {
+//        if presenter.isLastQuestion() {
+//            showResultsAlert()
+//        } else {
+//            presenter.switchToNextQuestion()
+//            
+//            questionFactory?.requestNextQuestion()
+//        }
+//        
+//        noButton.isEnabled = true
+//        yesButton.isEnabled = true
+//    }
+//    
+    func showResultsAlert () {
         statisticService?.store(correct: correctAnswers, total: presenter.questionAmount)
         
         let alertModel = AlertModel(title: "Этот раунд окончен!",
@@ -136,7 +136,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter?.show(resultsAlert: alertModel)
     }
     
-    private func makeResultMassage () -> String {
+    func makeResultMassage () -> String {
         guard let statisticService = statisticService else {
             assertionFailure("Error")
             return ""
