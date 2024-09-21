@@ -8,49 +8,53 @@
 import UIKit
 
 final class MovieQuizPresenter: QuestionFactoryDelegate {
+    // MARK: - Properties
     let questionAmount: Int = 10
     private var currentQuestionIndex: Int = 0
     var correctAnswers = 0
     
-    var currentQuestion: QuizQuestion?
-    weak var viewController: MovieQuizViewController?
+    private var currentQuestion: QuizQuestion?
+    weak var viewController: MovieQuizViewControllerProtocol?
     private var alertPresenter: AlertPresenterProtocol?
-    private var questionFactory: QuestionFactoryProtocol?
-    private var statisticService: StatisticServiceProtocol?
-    
-    init(viewController: MovieQuizViewController) {
-            self.viewController = viewController
-            
-            questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
-            questionFactory?.loadData()
-            viewController.showLoadingIndicator()
-        }
+    private let statisticService: StatisticServiceProtocol!
     
     // MARK: - QuestionFactoryDelegate
+    private var questionFactory: QuestionFactoryProtocol?
     
+    init(viewController: MovieQuizViewControllerProtocol) {
+        self.viewController = viewController
+        
+        statisticService = StatisticService()
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
+    }
+    
+    // MARK: - Methods
     func didLoadDataFromServer() {
-            viewController?.hideLoadingIndicator()
-            questionFactory?.requestNextQuestion()
-        }
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
     
     func didFailToLoadData(with error: Error) {
-            let message = error.localizedDescription
-            viewController?.showNetworkError(message: message)
-        }
+        let message = error.localizedDescription
+        viewController?.showNetworkError(message: message)
+    }
     
     func isLastQuestion() -> Bool {
-            currentQuestionIndex == questionAmount - 1
-        }
-        
-        func restartGame() {
-            currentQuestionIndex = 0
-            correctAnswers = 0
-            questionFactory?.requestNextQuestion()
-        }
-        
-        func switchToNextQuestion() {
-            currentQuestionIndex += 1
-        }
+        currentQuestionIndex == questionAmount - 1
+    }
+    
+    func restartGame() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func switchToNextQuestion() {
+        currentQuestionIndex += 1
+    }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         let result = QuizStepViewModel(
@@ -61,22 +65,14 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         return result
     }
     
-    func yesButtonClicked() {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        
-        let givenAnswer = true
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    func noButtonClicked() {
+        didAnswer(isYes: false)
+        viewController?.buttonsAccessibility(isAvailable: false)
     }
     
-    func noButtonClicked() {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        
-        let givenAnswer = false
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    func yesButtonClicked() {
+        didAnswer(isYes: true)
+        viewController?.buttonsAccessibility(isAvailable: false)
     }
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
@@ -91,20 +87,64 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         }
     }
     
-    func showNextQuestionOrResult () {
+    private func proceedToNextQuestionOrResults() {
+        viewController?.showLoadingIndicator()
+        
         if self.isLastQuestion() {
+            viewController?.hideLoadingIndicator()
             viewController?.showResultsAlert()
         } else {
             self.switchToNextQuestion()
+            viewController?.hideLoadingIndicator()
             questionFactory?.requestNextQuestion()
         }
         
-        viewController?.noButton.isEnabled = true
-        viewController?.yesButton.isEnabled = true
+        viewController?.buttonsAccessibility(isAvailable: true)
     }
     
-    func didAnswer(isCorrectAnswer: Bool) {
-        if isCorrectAnswer { correctAnswers += 1 }
+    private func didAnswer(isYes: Bool) {
+        guard let currentQuestion = currentQuestion else {
+            return
+        }
+        
+        let givenAnswer = isYes
+        proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
-
+    
+    func makeResultsMessage() -> String {
+        guard let statisticService = statisticService else {
+            assertionFailure("Error")
+            return ""
+        }
+        
+        guard let bestGame = self.statisticService?.bestGame else {
+            assertionFailure("Error get bestGame")
+            return ""
+        }
+        
+        statisticService.store(correct: correctAnswers, total: questionAmount)
+        
+        let totalAccuracy = "\(String(format: "%.2f", statisticService.totalAccuracy))%"
+        
+        let massage = """
+        Ваш результат: \(correctAnswers)/\(questionAmount)
+        Количество сыгранных квизов: \(String(statisticService.gamesCount))
+        Рекорд: \(String(bestGame.correct))/\(String(bestGame.total)) \(String(bestGame.date.dateTimeString))
+        Средняя точность: \(totalAccuracy)
+        """
+        
+        return massage
+    }
+    
+    private func proceedWithAnswer(isCorrect: Bool) {
+        if isCorrect { correctAnswers += 1}
+        viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.proceedToNextQuestionOrResults()
+        }
+    }
+    
 }
+
