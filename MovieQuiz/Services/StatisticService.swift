@@ -88,7 +88,6 @@ extension StatisticService: StatisticServiceProtocol {
         if newBestGame.isBetterThan(bestGame) {
             bestGame = newBestGame
         }
-        
     }
     
 }
